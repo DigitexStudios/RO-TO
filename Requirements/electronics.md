@@ -44,3 +44,9 @@
 - 1x 11.1V battery
 
 ## LM2596 or similar voltage regulator
+
+## (Optional) Standard-size hobby servo, FT5320M servo or equivalent
+
+## (Optional) 25T Servo horn
+![image](https://github.com/DigitexStudios/RO-TO/assets/62073336/0c503cc8-943d-41d4-9475-70e0a3942786)
+
