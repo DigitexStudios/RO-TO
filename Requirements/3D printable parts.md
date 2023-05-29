@@ -10,6 +10,7 @@
 - 2x (Mirrored pair) - Upper Leg - upper_leg.3mf
 - 2x - Upper Leg link - upper_leg_link.3mf
 - 2x (Mirrored pair) - Upper Leg support - upper_leg_support.3mf
+- 1x - MPUMount - mpu_mount.3mf
 
 **If you are using servo motors, you will need:**
 - 2x more - 20mm washer - 20mm_washer.3mf
