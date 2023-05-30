@@ -4,11 +4,11 @@ int acc_calibration_value = 1000;                            //Enter the acceler
 volatile unsigned long StartTime = 0;
 volatile unsigned long CurrentTime = 0;
 volatile unsigned long Pulses = 0;
-unsigned long PulseWidth = 0;
+unsigned long PulseWidth = 1500;
 volatile unsigned long StartTime2 = 0;
 volatile unsigned long CurrentTime2 = 0;
 volatile unsigned long Pulses2 = 0;
-unsigned long PulseWidth2 = 0;
+unsigned long PulseWidth2 = 1500;
 //Various settings
 float pid_p_gain = 18;                                       //Gain setting for the P-controller (15)
 float pid_i_gain = 0.5;                                      //Gain setting for the I-controller (1.5)
@@ -34,7 +34,7 @@ unsigned long loop_timer;
 float angle_gyro, angle_acc, angle, self_balance_pid_setpoint;
 float pid_error_temp, pid_i_mem, pid_setpoint, gyro_input, pid_output, pid_last_d_error;
 float pid_output_left, pid_output_right;
-
+int runs = 0;
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Setup basic functions
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -85,6 +85,7 @@ void setup(){
   pinMode(8, OUTPUT);                                                       //Configure digital poort 5 as output
   pinMode(13,OUTPUT);
   pinMode(12,OUTPUT);
+  pinMode(10,OUTPUT);
   digitalWrite(12, !digitalRead(12));
   delay(100);
   digitalWrite(12, !digitalRead(12));
@@ -93,9 +94,19 @@ void setup(){
   delay(100);
   digitalWrite(12, !digitalRead(12));
   delay(100);
-  digitalWrite(12, !digitalRead(12));                                                      //Configure digital poort 6 as output
+  digitalWrite(12, !digitalRead(12));
+  delay(10);
+  digitalWrite(10, !digitalRead(10)); 
+  delay(10);
+  digitalWrite(10, !digitalRead(10)); 
+  delay(10);
+  digitalWrite(10, !digitalRead(10)); 
+  delay(10);
+  digitalWrite(10, !digitalRead(10)); 
+  delay(10);
+  digitalWrite(10, !digitalRead(10));                                                       //Configure digital poort 6 as output
   for(receive_counter = 0; receive_counter < 500; receive_counter++){       //Create 500 loops
-    if(receive_counter % 15 == 0)digitalWrite(13, !digitalRead(13));        //Change the state of the LED every 15 loops to make the LED blink fast
+    if(receive_counter % 15 == 0){digitalWrite(13, !digitalRead(13));digitalWrite(10, !digitalRead(10));}        //Change the state of the LED every 15 loops to make the LED blink fast
     Wire.beginTransmission(gyro_address);                                   //Start communication with the gyro
     Wire.write(0x43);                                                       //Start reading the Who_am_I register 75h
     Wire.endTransmission();                                                 //End the transmission
@@ -108,14 +119,22 @@ void setup(){
   gyro_yaw_calibration_value /= 500;                                        //Divide the total value by 500 to get the avarage gyro offset
 
   loop_timer = micros() + 4000;                                             //Set the loop_timer variable at the next end loop time
+  PulseWidth = 1500;
+  PulseWidth2 = 1500;
 }
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //Main program loop
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 int vX, vY;
+
 void loop(){
-  digitalWrite(12, HIGH);
+  runs += 1;
+  if(runs >= 15) {
+    digitalWrite(10, !digitalRead(10));
+    runs = 0;
+  }
+  digitalWrite(12, LOW);
   noInterrupts();
   if (Pulses < 2200){
     
@@ -135,7 +154,7 @@ void loop(){
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //Angle calculations
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  digitalWrite(12, LOW);
+  
   Wire.beginTransmission(gyro_address);                                     //Start communication with the gyro
   Wire.write(0x3F);                                                         //Start reading at register 3F
   Wire.endTransmission();                                                   //End the transmission
@@ -161,7 +180,7 @@ void loop(){
   
   gyro_pitch_data_raw -= gyro_pitch_calibration_value;                      //Add the gyro calibration value
   angle_gyro += gyro_pitch_data_raw * 0.000031;                             //Calculate the traveled during this loop angle and add this to the angle_gyro variable
-  
+  digitalWrite(12, HIGH);
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //MPU-6050 offset compensation
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -198,10 +217,13 @@ void loop(){
   if(pid_output < 5 && pid_output > -5)pid_output = 0;                      //Create a dead-band to stop the motors when the robot is balanced
 
   if(angle_gyro > 30 || angle_gyro < -30 || start == 0 || low_bat == 1){    //If the robot tips over or the start variable is zero or the battery is empty
+    digitalWrite(13,HIGH);
     pid_output = 0;                                                         //Set the PID controller output to 0 so the motors stop moving
     pid_i_mem = 0;                                                          //Reset the I-controller memory
     start = 0;                                                              //Set the start variable to 0
     self_balance_pid_setpoint = 0;                                          //Reset the self_balance_pid_setpoint variable
+  } else {
+    digitalWrite(13,LOW);
   }
   
   ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -212,11 +234,6 @@ void loop(){
 
   pid_output_left += 0.25*(double(vX/100))*turning_speed;
   pid_output_right -= 0.25*(double(vX/100))*turning_speed;
-
-  pid_output_left += 0.25*(double(vY/50))*turning_speed;
-  pid_output_right += 0.25*(double(vY/50))*turning_speed;
-
-  
 
   if(pid_setpoint > -2.5)pid_setpoint += 0.05;
   
